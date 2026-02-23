@@ -1,0 +1,9 @@
+node_modules/
+main.js
+dist/
+*.js.map
+apps/
+assets/onlyoffice/web-apps/
+assets/onlyoffice/sdkjs/
+assets/onlyoffice/wasm/
+assets/onlyoffice/fonts/
