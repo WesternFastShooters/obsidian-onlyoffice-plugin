@@ -83,7 +83,10 @@ export class OfficeFileView extends FileView {
       await this.bridge.open(file.name, fileData, false);
 
       if (this.loadingEl) this.loadingEl.remove();
-      if (this.editorContainer) this.editorContainer.style.display = "";
+      if (this.editorContainer) {
+        this.editorContainer.style.display = "flex";
+        this.editorContainer.style.height = "100%";
+      }
     } catch (err) {
       console.error("Failed to open office file:", err);
       if (this.loadingEl) {
@@ -103,7 +106,9 @@ export class OfficeFileView extends FileView {
       new Notice("已保存");
     } catch (err) {
       console.error("Failed to save:", err);
-      new Notice(`保存失败: ${err instanceof Error ? err.message : String(err)}`);
+      new Notice(
+        `保存失败: ${err instanceof Error ? err.message : String(err)}`,
+      );
     }
   }
 
