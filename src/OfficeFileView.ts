@@ -103,7 +103,6 @@ export class OfficeFileView extends FileView {
     if (!this.file) return;
     try {
       await this.vaultIO.writeBinary(this.file, data);
-      new Notice("已保存");
     } catch (err) {
       console.error("Failed to save:", err);
       new Notice(
@@ -114,6 +113,7 @@ export class OfficeFileView extends FileView {
 
   async onUnloadFile(): Promise<void> {
     if (this.bridge) {
+      await this.bridge.triggerSaveAndWait(3000);
       this.bridge.destroy();
       this.bridge = null;
     }

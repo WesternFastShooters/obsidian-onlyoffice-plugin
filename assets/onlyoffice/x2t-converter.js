@@ -146,9 +146,9 @@ async function convertBinToDocument(bin, originalFileName, targetExt) {
   targetExt = targetExt || "DOCX";
   await initialize("./wasm/x2t/x2t.js");
 
-  const base = sanitizeFileName(originalFileName).replace(/\.[^/.]+$/, "");
-  const binFileName = base + ".bin";
-  const outputFileName = base + "." + targetExt.toLowerCase();
+  const sanitizedBase = sanitizeFileName(originalFileName).replace(/\.[^/.]+$/, "");
+  const binFileName = sanitizedBase + ".bin";
+  const outputFileName = sanitizedBase + "." + targetExt.toLowerCase();
 
   x2tModule.FS.writeFile("/working/" + binFileName, bin);
 

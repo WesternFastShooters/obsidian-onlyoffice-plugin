@@ -25,6 +25,10 @@
   let mediaMap = {};
   let apiLoaded = false;
 
+  let autoSaveTimer = null;
+  let documentModified = false;
+  var AUTO_SAVE_DELAY = 3000;
+
   function loadEditorApi() {
     if (apiLoaded && window.DocsAPI) return Promise.resolve();
     return new Promise(function (resolve, reject) {
@@ -44,6 +48,23 @@
 
   function sendToPlugin(msg, transfer) {
     window.parent.postMessage(msg, "*", transfer || []);
+  }
+
+  function scheduleAutoSave() {
+    if (autoSaveTimer) clearTimeout(autoSaveTimer);
+    autoSaveTimer = setTimeout(function () {
+      if (documentModified && editorInstance) {
+        editorInstance.sendCommand({ command: "asc_Save" });
+      }
+      autoSaveTimer = null;
+    }, AUTO_SAVE_DELAY);
+  }
+
+  function cancelAutoSave() {
+    if (autoSaveTimer) {
+      clearTimeout(autoSaveTimer);
+      autoSaveTimer = null;
+    }
   }
 
   function getExtFromName(name) {
@@ -117,6 +138,12 @@
             hideLoading();
             sendToPlugin({ type: "oo:opened", requestId: requestId });
           },
+          onDocumentStateChange: function (event) {
+            documentModified = event.data;
+            if (documentModified) {
+              scheduleAutoSave();
+            }
+          },
           onSave: function (event) {
             handleSave(event);
           },
@@ -151,15 +178,9 @@
       var outputformat = option.outputformat;
       var targetExt = FILE_TYPE_CODE_MAP[outputformat] || currentFileExt.toUpperCase() || "DOCX";
 
-      var binData;
-      if (data.data instanceof Uint8Array) {
-        binData = data.data;
-      } else if (data instanceof Uint8Array) {
-        binData = data;
-      } else if (typeof data === "object" && data.data) {
-        binData = new Uint8Array(data.data);
-      } else {
-        console.warn("[editor] onSave: unexpected data structure", typeof data);
+      var binData = data.data;
+      if (!binData) {
+        console.warn("[editor] onSave: no bin data found in event.data.data.data");
         notifySaveCallback();
         return;
       }
@@ -184,6 +205,7 @@
         [arrayBuffer],
       );
 
+      documentModified = false;
       notifySaveCallback();
     } catch (err) {
       console.error("[editor] handleSave failed:", err);
@@ -272,7 +294,9 @@
         break;
 
       case "oo:save":
-        // Programmatic save trigger from plugin - not yet implemented
+        if (editorInstance) {
+          editorInstance.sendCommand({ command: "asc_Save" });
+        }
         break;
 
       case "oo:export":

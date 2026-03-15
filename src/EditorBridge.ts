@@ -131,6 +131,29 @@ export class EditorBridge {
     throw new Error("Unexpected response");
   }
 
+  triggerSave() {
+    this.send({ type: "oo:save", requestId: "" });
+  }
+
+  triggerSaveAndWait(timeoutMs = 3000): Promise<void> {
+    return new Promise<void>((resolve) => {
+      const origCallback = this.onSaveCallback;
+      const timer = setTimeout(() => {
+        this.onSaveCallback = origCallback;
+        resolve();
+      }, timeoutMs);
+
+      this.onSaveCallback = (data, fileName) => {
+        clearTimeout(timer);
+        if (origCallback) origCallback(data, fileName);
+        this.onSaveCallback = origCallback;
+        resolve();
+      };
+
+      this.send({ type: "oo:save", requestId: "" });
+    });
+  }
+
   destroy() {
     window.removeEventListener("message", this.messageHandler);
     for (const [, req] of this.pending) {
